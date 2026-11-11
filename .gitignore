@@ -1,0 +1,23 @@
+   # Python
+   __pycache__/
+   *.pyc
+   .venv/
+   venv/
+   .env
+
+   # Jupyter
+   .ipynb_checkpoints/
+
+   # Tests
+   .pytest_cache/
+
+   # Modèles entraînés (trop lourds pour GitHub)
+   *.pt
+
+   # Données générées
+   *.npy
+   *.csv
+
+   # Système
+   .DS_Store
+   Thumbs.db
