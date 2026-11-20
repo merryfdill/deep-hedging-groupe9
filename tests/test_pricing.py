@@ -1,6 +1,14 @@
 import torch
 import pytest
-from src.pricing import bs_call_price, bs_delta_strategy, compute_hedging_pnl
+from src.pricing import (
+    bs_call_price,
+    bs_delta_strategy,
+    compute_hedging_pnl,
+    summarize_pnl,
+    value_at_risk,
+    conditional_value_at_risk,
+    entropic_risk,
+)
 
 def test_bs_call_price():
     # Example: S=100, K=100, T=1, r=0.03, sigma=0.2
@@ -37,3 +45,35 @@ def test_pnl_calculation():
     # P&L = -2.0 + 1.0 = -1.0
     assert torch.isclose(pnl[0], torch.tensor(-1.0))
     assert torch.isclose(costs[0], torch.tensor(0.0))
+
+
+def test_transaction_costs():
+    S = torch.tensor([[100.0, 110.0]], dtype=torch.float32)
+    deltas = torch.tensor([[0.5]], dtype=torch.float32)
+
+    pnl, costs = compute_hedging_pnl(S, deltas, K=100.0, c=0.01)
+
+    assert torch.isclose(pnl[0], torch.tensor(-5.5))
+    assert torch.isclose(costs[0], torch.tensor(0.5))
+
+
+def test_summarize_pnl_var_and_cvar():
+    pnl = torch.tensor([-10.0, -5.0, 0.0, 5.0, 10.0])
+    costs = torch.tensor([1.0, 1.0, 1.0, 1.0, 1.0])
+
+    metrics = summarize_pnl(pnl, costs)
+
+    assert torch.isclose(
+        torch.tensor(metrics["Quantile 5%"]),
+        torch.tensor(-9.0),
+    )
+    assert torch.isclose(torch.tensor(metrics["VaR 95%"]), torch.tensor(9.0))
+    assert torch.isclose(torch.tensor(metrics["CVaR 95%"]), torch.tensor(10.0))
+
+
+def test_risk_functions():
+    pnl = torch.tensor([-10.0, -5.0, 0.0, 5.0, 10.0])
+
+    assert value_at_risk(pnl) == pytest.approx(9.0)
+    assert conditional_value_at_risk(pnl) == pytest.approx(10.0)
+    assert entropic_risk(torch.zeros(5), 1.0) == pytest.approx(0.0)
